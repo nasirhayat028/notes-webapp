@@ -1,0 +1,84 @@
+.activity-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.activity-label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.activity-value {
+  color: var(--color-text);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.activity-sublabel {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding-top: 4px;
+}
+
+.activity-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.activity-bar-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-bar-track {
+  height: 64px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.activity-bar {
+  width: 100%;
+  max-width: 22px;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--chart-bar-base);
+  transition: background-color 0.2s;
+  cursor: default;
+}
+
+.activity-bar:hover,
+.activity-bar:focus-visible {
+  background-color: var(--chart-bar-emphasis);
+  outline: none;
+}
+
+.activity-bar-today {
+  background-color: var(--chart-bar-emphasis);
+}
+
+.activity-bar-label {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}

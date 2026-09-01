@@ -1,0 +1,75 @@
+.note-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.note-title {
+  color: var(--color-text);
+  font-size: 17px;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.note-preview {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+  flex-grow: 1;
+}
+
+.note-date {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  margin: 0 0 16px 0;
+}
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.button-open,
+.button-edit,
+.button-delete {
+  flex: 1;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.button-open {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.button-open:hover {
+  background-color: var(--color-border);
+}
+
+.button-edit {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.button-edit:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.button-delete {
+  background-color: var(--color-surface);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+
+.button-delete:hover {
+  background-color: var(--color-danger-bg);
+}

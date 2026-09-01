@@ -1,0 +1,81 @@
+:root {
+  /* Dark page canvas — everything sits directly on this */
+  --color-canvas: #121212;
+  --color-canvas-ink: #ffffff;
+  --color-canvas-ink-secondary: #a3a3a3;
+  --color-canvas-border: rgba(255, 255, 255, 0.08);
+
+  /* White floating cards (modals, note cards, auth box, stat cards) */
+  --color-surface: #ffffff;
+  --color-surface-alt: #f4f4f5;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+
+  /* Primary action on a white surface (Save, Edit, auth submit) */
+  --color-accent: #111827;
+  --color-accent-hover: #000000;
+  --color-accent-contrast: #ffffff;
+
+  /* Primary action sitting directly on the dark canvas (+ New Note) */
+  --color-accent-on-canvas: #ffffff;
+  --color-accent-on-canvas-hover: #e5e5e5;
+  --color-accent-on-canvas-ink: #111111;
+
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fee2e2;
+  --color-danger-on-canvas: #f87171;
+  --color-danger-on-canvas-bg: rgba(248, 113, 113, 0.14);
+
+  --chart-bar-base: #6b7280;
+  --chart-bar-emphasis: #111827;
+
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-canvas);
+  color: var(--color-canvas-ink);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: var(--color-canvas-ink-secondary);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
