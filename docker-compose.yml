@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: napp-backend
+    ports:
+      - "${PORT:-5000}:5000"
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: napp-frontend
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    restart: always
