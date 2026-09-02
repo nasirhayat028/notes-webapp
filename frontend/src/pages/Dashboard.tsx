@@ -18,6 +18,8 @@ interface DashboardProps {
   setIsAuthenticated: (value: boolean) => void
 }
 
+const BACKEND_URL = 'http://localhost:5000'
+
 function Dashboard({ setIsAuthenticated }: DashboardProps) {
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,8 +31,6 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
   const [userName, setUserName] = useState('')
   const [allNotes, setAllNotes] = useState<Note[]>([])
   const navigate = useNavigate()
-
-  const token = localStorage.getItem('token')
 
   useEffect(() => {
     fetchUser()
@@ -47,8 +47,9 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
+      const activeToken = localStorage.getItem('token')
+      const response = await axios.get(`${BACKEND_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       })
       setUserName(response.data.name)
     } catch (err) {
@@ -59,25 +60,41 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
   const fetchNotes = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/notes', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { search: search || undefined },
+      const activeToken = localStorage.getItem('token')
+      const response = await axios.get(`${BACKEND_URL}/api/notes`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
+        params: { search }
       })
-      setNotes(response.data.notes)
+
+      // 💡 Format validation check update:
+      if (Array.isArray(response.data)) {
+        setNotes(response.data)
+      } else if (response.data && Array.isArray(response.data.notes)) {
+        setNotes(response.data.notes)
+      } else if (response.data && Array.isArray(response.data.data)) {
+        setNotes(response.data.data)
+      } else {
+        setNotes([])
+      }
+
       setError('')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load notes')
+    } catch (err) {
+      console.error(err)
+      setError('Failed to load notes')
     } finally {
       setLoading(false)
     }
   }
 
+
   const fetchActivity = async () => {
     try {
-      const response = await axios.get('/api/notes', {
-        headers: { Authorization: `Bearer ${token}` },
+      const activeToken = localStorage.getItem('token')
+      const response = await axios.get(`${BACKEND_URL}/api/notes`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       })
-      setAllNotes(response.data.notes)
+      const notesArray = Array.isArray(response.data) ? response.data : response.data.notes || []
+      setAllNotes(notesArray)
     } catch (err) {
       console.error('Error fetching activity data:', err)
     }
@@ -85,10 +102,11 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
 
   const handleLogout = async () => {
     try {
+      const activeToken = localStorage.getItem('token')
       await axios.post(
-        '/api/auth/logout',
+        `${BACKEND_URL}/api/auth/logout`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${activeToken}` } }
       )
     } catch (err) {
       console.error('Error during logout:', err)
@@ -112,8 +130,9 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
   const handleViewNote = async (note: Note) => {
     try {
       setError('')
-      const response = await axios.get(`/api/notes/${note._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const activeToken = localStorage.getItem('token')
+      const response = await axios.get(`${BACKEND_URL}/api/notes/${note._id}`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       })
       setViewingNote(response.data)
     } catch (err: any) {
@@ -133,10 +152,10 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
     if (!window.confirm('Are you sure you want to delete this note?')) {
       return
     }
-
     try {
-      await axios.delete(`/api/notes/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const activeToken = localStorage.getItem('token')
+      await axios.delete(`${BACKEND_URL}/api/notes/${id}`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       })
       setNotes(notes.filter((note) => note._id !== id))
       setAllNotes(allNotes.filter((note) => note._id !== id))
@@ -145,28 +164,32 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
     }
   }
 
+  // 💡 Parameters signature dynamically handled
   const handleSaveNote = async (title: string, content: string) => {
     try {
+      const activeToken = localStorage.getItem('token')
+
       if (editingNote) {
-        const response = await axios.put(
-          `/api/notes/${editingNote._id}`,
+        await axios.put(
+          `${BACKEND_URL}/api/notes/${editingNote._id}`,
           { title, content },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${activeToken}` } }
         )
-        setNotes(notes.map((n) => (n._id === editingNote._id ? response.data.note : n)))
       } else {
-        const response = await axios.post(
-          '/api/notes',
+        await axios.post(
+          `${BACKEND_URL}/api/notes`,
           { title, content },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${activeToken}` } }
         )
-        setNotes([response.data.note, ...notes])
-        setAllNotes([response.data.note, ...allNotes])
       }
+
       setShowModal(false)
       setEditingNote(null)
+      fetchNotes()
+      fetchActivity()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save note')
+      console.error(err)
+      alert(err.response?.data?.message || 'Failed to save note')
     }
   }
 
@@ -249,7 +272,7 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
           note={viewingNote}
           readOnly
           onEdit={handleEditFromView}
-          onSave={() => {}}
+          onSave={() => { }}
           onClose={() => setViewingNote(null)}
         />
       )}
