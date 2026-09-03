@@ -1,36 +1,117 @@
-# Environment & Secret files
+# ==========================================
+# 1. Environment Variables & Secrets
+# ==========================================
 .env
 .env.*
 !.env.example
+!.env.*.example
 *.env
+*.env.*
+*.secret
+*.secrets
 
-# Kubernetes Secrets
-secret.yaml
-secrets.yaml
+# Kubernetes Secrets & Credentials
+k8s/**/secret.yaml
+k8s/**/secrets.yaml
 *secret*.yaml
 *secrets*.yaml
 secret.json
 secrets.json
-!.env.example
+kubeconfig
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+
+# Exception for example files
 !*.example
+!*.example.yaml
+!*.example.yml
 
-# Dependencies & Node
+# ==========================================
+# 2. Dependencies & Package Managers
+# ==========================================
 node_modules/
+**/node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.pnp
+.pnp.js
 
-# Build & Output
+# ==========================================
+# 3. Build & Compiled Outputs
+# ==========================================
 dist/
+**/dist/
 build/
+**/build/
 out/
+**/out/
 .next/
+.nuxt/
+.vite/
+**/node_modules/.vite/
+*.tsbuildinfo
 
-# Logs
+# ==========================================
+# 4. Logs & Debugging Files
+# ==========================================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# OS & Editor files
-.DS_Store
-Thumbs.db
-.vscode/
+# ==========================================
+# 5. Testing & Code Coverage
+# ==========================================
+coverage/
+**/coverage/
+.nyc_output/
+.playwright/
+cypress/videos/
+cypress/screenshots/
+
+# ==========================================
+# 6. Database & Local Storage Dumps
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+mongo_data/
+data/db/
+*.dump
+*.sql
+
+# ==========================================
+# 7. IDE, Code Editors & OS System Files
+# ==========================================
+.vscode/*
+!.vscode/extensions.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# ==========================================
+# 8. Temporary & Backup Files
+# ==========================================
+tmp/
+temp/
+*.tmp
+*.bak
