@@ -201,7 +201,7 @@ function Dashboard({ setIsAuthenticated }: DashboardProps) {
   return (
     <div className="dashboard-shell">
       <aside className="sidebar">
-        <div className="sidebar-brand">Simple Notes</div>
+        <div className="sidebar-brand">Nasir's Notes App v2</div>
 
         <button onClick={handleCreateNote} className="new-note-button">
           + New Note
