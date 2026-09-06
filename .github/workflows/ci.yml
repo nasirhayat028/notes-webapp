@@ -82,11 +82,11 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/notesapp-frontend:build-${{ github.run_number }}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/notesapp-backend:build-${{ github.run_number }}
