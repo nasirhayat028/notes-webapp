@@ -57,6 +57,12 @@ spec:
                   name: notes-app-secret
                   key: MONGODB_URI
 
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: notes-app-secret
+                  key: JWT_SECRET
+
           resources:
             requests:
               cpu: 100m
