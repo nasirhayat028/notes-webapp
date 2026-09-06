@@ -20,8 +20,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: notes-app-backend:latest
-          imagePullPolicy: IfNotPresent
+          image: nasirhayat028/notesapp-backend:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 5000

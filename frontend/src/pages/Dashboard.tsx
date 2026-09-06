@@ -18,7 +18,12 @@ interface DashboardProps {
   setIsAuthenticated: (value: boolean) => void
 }
 
-const BACKEND_URL = 'http://localhost:5000'
+// Root cause of "Failed to load notes" on Kubernetes: this used to point at
+// http://localhost:5000, which only worked under docker-compose (backend port
+// published to the host). Behind the k8s Ingress, the backend has no host port
+// -- it's only reachable through nginx's /api/ proxy on the same origin as the
+// frontend. Use a relative base so requests go through that proxy in both setups.
+const BACKEND_URL = ''
 
 function Dashboard({ setIsAuthenticated }: DashboardProps) {
   const [notes, setNotes] = useState<Note[]>([])
