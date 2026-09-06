@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: nasirhayat028/notes-backend:build-12
+          image: nasirhayat028/notes-backend:build-13
           imagePullPolicy: Always
 
           ports:
