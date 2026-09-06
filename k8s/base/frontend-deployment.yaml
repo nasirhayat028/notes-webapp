@@ -20,8 +20,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: notes-app-frontend:latest
-          imagePullPolicy: IfNotPresent
+          image: nasirhayat028/notesapp-frontend:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 80
