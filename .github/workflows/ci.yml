@@ -94,8 +94,8 @@ jobs:
       - name: Update Kubernetes manifests
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          sed -i "s|image: .*/notes-frontend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/notes-frontend:build-${{ github.run_number }}|" k8s/base/frontend-deployment.yaml
-          sed -i "s|image: .*/notes-backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/notes-backend:build-${{ github.run_number }}|" k8s/base/backend-deployment.yaml
+          sed -i "s|image: .*/notes-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}|" k8s/base/frontend-deployment.yaml
+          sed -i "s|image: .*/notes-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}|" k8s/base/backend-deployment.yaml
 
       - name: Commit manifest changes
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
