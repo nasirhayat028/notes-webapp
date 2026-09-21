@@ -1,0 +1,43 @@
+name: SonarQube Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  sonar-analysis:
+
+    name: SonarQube Code Analysis
+
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+          cd ../backend
+          npm ci
+
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: http://sonarqube.local
