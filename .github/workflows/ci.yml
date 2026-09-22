@@ -77,6 +77,27 @@ jobs:
           with:
             fetch-depth: 0
 
+         # Step 1: Setup Node.js self-hosted runner par taake tests chal sakein
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: 22
+
+        # Step 2: Frontend ki dependencies install karke coverage report banana
+        - name: Generate Frontend Coverage
+          run: |
+            cd frontend
+            npm ci
+            npm run coverage
+
+        # Step 3: Backend ki dependencies install karke coverage report banana
+        - name: Generate Backend Coverage
+          run: |
+            cd backend
+            npm ci
+            npm run coverage
+
+
         - name: SonarQube Scan
           uses: SonarSource/sonarqube-scan-action@v5
           env:
