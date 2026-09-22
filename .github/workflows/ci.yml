@@ -80,7 +80,7 @@ jobs:
 
   sonarqube:
       name: SonarQube Analysis
-      runs-on: self-hosted
+      runs-on: ubuntu-latest
 
       # Self-hosted runner ko sirf trusted main pushes par use karna
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -119,10 +119,10 @@ jobs:
 
         - name: SonarQube Scan
           uses: SonarSource/sonarqube-scan-action@v5
-          
+
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: http://sonarqube.local
+            SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
 
 
         - name: SonarQube Quality Gate
@@ -132,7 +132,7 @@ jobs:
            pollingTimeoutSec: 600
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: http://sonarqube.local
+            SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
 
   docker:
     name: Build and Push Docker Images
