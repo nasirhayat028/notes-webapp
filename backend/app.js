@@ -6,6 +6,8 @@ const noteRoutes = require('./routes/notes');
 
 const app = express();
 
+app.disable('x-powered-by');
+
 // Middleware
 app.use(express.json());
 app.use(cors());
