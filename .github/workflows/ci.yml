@@ -119,9 +119,7 @@ jobs:
 
         - name: SonarQube Scan
           uses: SonarSource/sonarqube-scan-action@v5
-          with:
-            args: >
-              -Dsonar.ws.timeout=600
+          
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
             SONAR_HOST_URL: http://sonarqube.local
