@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 describe('Frontend test setup', () => {
-  it('should run Vitest successfully', () => {
-    expect(true).toBe(true)
+  it('should load the frontend test environment', () => {
+    expect(document).toBeDefined()
   })
 })
