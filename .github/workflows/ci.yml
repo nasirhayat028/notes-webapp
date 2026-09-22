@@ -137,6 +137,61 @@ jobs:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
             SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
 
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    needs:
+      - frontend
+      - backend
+      - gitleaks
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate Frontend Coverage
+        run: |
+          cd frontend
+          npm ci
+          npm run coverage
+
+      - name: Generate Backend Coverage
+        run: |
+          cd backend
+          npm ci
+          npm run coverage
+
+        # Version v5 ko badal kar v3.1.0 kiya jo binary compatibility issues ko fix karega
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3.1.0
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.ws.timeout=600
+            -Dsonar.scanner.skipJreProvisioning=true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+      
+      - name: SonarQube Quality Gate
+        id: quality-gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          pollingTimeoutSec: 600
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+
   docker:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
