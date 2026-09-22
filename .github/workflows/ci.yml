@@ -119,6 +119,10 @@ jobs:
 
         - name: SonarQube Scan
           uses: SonarSource/sonarqube-scan-action@v5
+          with:
+            args: >
+              -Dsonar.ws.timeout=600
+              -Dsonar.scanner.skipJreProvisioning=true
 
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
