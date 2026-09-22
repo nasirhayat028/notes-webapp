@@ -118,7 +118,12 @@ jobs:
             npm run coverage
 
         - name: SonarQube Scan
-          uses: SonarSource/sonarqube-scan-action@v3.1.0
+          uses: SonarSource/sonarqube-scan-action@v5
+          with:
+            args: >
+              -Dsonar.ws.timeout=600
+              -Dsonar.scanner.skipJreProvisioning=true
+              -Dsonar.scanner.force-deprecated-api-for-engine-download=true
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
             SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
