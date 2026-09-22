@@ -120,15 +120,13 @@ jobs:
         - name: SonarQube Scan
           uses: SonarSource/sonarqube-scan-action@v5
           with:
-            args: >
-              -Dsonar.ws.timeout=600
-              -Dsonar.scanner.skipJreProvisioning=true
-              -Dsonar.scanner.force-deprecated-api-for-engine-download=true
+            projectBaseDir: .
           env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
+            SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+          
 
-
+      
         - name: SonarQube Quality Gate
           id: quality-gate
           uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
