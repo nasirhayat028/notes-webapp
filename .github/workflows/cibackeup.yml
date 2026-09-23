@@ -2,12 +2,10 @@ name: Notes App CI
 
 on:
   push:
-    branches:
-      - main
+    branches: []
 
   pull_request:
-    branches:
-      - main
+    branches: []
 
 permissions:
   contents: write
@@ -171,17 +169,16 @@ jobs:
           SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
 
   docker:
-    name: Build, Scan and Push Docker Images
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
+    
     needs:
       - frontend
       - backend
       - sonarqube
       - gitleaks
-      - dependency-scan
 
     steps:
       - name: Checkout repository
@@ -193,72 +190,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # -------------------------
-      # FRONTEND
-      # -------------------------
-
-      - name: Build frontend image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          push: false
-          load: true
+          push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
 
-      - name: Scan frontend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
-
-      # -------------------------
-      # BACKEND
-      # -------------------------
-
-      - name: Build backend image
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
-          push: false
-          load: true
+          push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
 
-      - name: Scan backend image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
-
-      # -------------------------
-      # PUSH ONLY AFTER SCAN
-      # -------------------------
-
-      - name: Push frontend image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-
-      - name: Push backend image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-
-      # -------------------------
-      # KUBERNETES MANIFESTS
-      # -------------------------
-
       - name: Update Kubernetes manifests
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           sed -i "s|image: .*/notes-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}|" k8s/base/frontend-deployment.yaml
           sed -i "s|image: .*/notes-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}|" k8s/base/backend-deployment.yaml
 
       - name: Commit manifest changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
