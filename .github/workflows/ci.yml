@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Run tests before the build so a green image always comes from tested code.
+      - name: Test frontend
+        run: npm test -- --run
+
       - name: Build frontend
         run: npm run build
 
@@ -60,6 +64,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Backend has API tests even though it has no separate compile step.
+      - name: Test backend
+        run: npm test -- --run
+
   gitleaks:
     name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
@@ -79,65 +87,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sonarqube:
-      name: SonarQube Analysis
-      runs-on: ubuntu-latest
-
-      # Self-hosted runner ko sirf trusted main pushes par use karna
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-
-      needs:
-        - frontend
-        - backend
-        - gitleaks
-
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-
-         # Step 1: Setup Node.js self-hosted runner par taake tests chal sakein
-        - name: Setup Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: 22
-
-        # Step 2: Frontend ki dependencies install karke coverage report banana
-        - name: Generate Frontend Coverage
-          run: |
-            cd frontend
-            npm ci
-            npm run coverage
-
-        # Step 3: Backend ki dependencies install karke coverage report banana
-        - name: Generate Backend Coverage
-          run: |
-            cd backend
-            npm ci
-            npm run coverage
-
-        - name: SonarQube Scan
-          uses: SonarSource/sonarqube-scan-action@v5
-          with:
-            projectBaseDir: .
-          env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
-            SONAR_SCANNER_SKIP_JRE_PROVISIONING: true
-
-
-      
-        - name: SonarQube Quality Gate
-          id: quality-gate
-          uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
-          with:
-           pollingTimeoutSec: 600
-          env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev
-
-  sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
 
@@ -154,6 +103,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      # These steps must be siblings of checkout; nesting them under checkout
+      # makes the workflow invalid and prevents GitHub Actions from loading it.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -171,7 +122,7 @@ jobs:
           npm ci
           npm run coverage
 
-        # Version v5 ko badal kar v3.1.0 kiya jo binary compatibility issues ko fix karega
+      # Pin the scanner version so the runner does not change scanner behavior unexpectedly.
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v3.1.0
         with:
@@ -182,7 +133,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
-      
+
       - name: SonarQube Quality Gate
         id: quality-gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
