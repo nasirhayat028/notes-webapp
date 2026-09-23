@@ -125,6 +125,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      # SonarQube Server 26.x requires Java 21 for the analysis engine.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Generate Frontend Coverage
         run: |
           cd frontend
@@ -140,12 +146,12 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.ws.timeout=600
-            -Dsonar.scanner.skipJreProvisioning=true
+            -Dsonar.scanner.socketTimeout=600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev 
-                              
+          # This must be the complete, reachable SonarQube server URL.
+          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+
       - name: SonarQube Quality Gate
         id: quality-gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
@@ -153,8 +159,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL:  https://catchable-premium-document.ngrok-free.dev 
-                              
+          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
 
   # ==========================================
   # STAGE 4: PACKAGING & IMAGE SECURITY
@@ -240,23 +245,25 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      - name: Re-build and Push Frontend
-        uses: docker/build-push-action@v6
+      - name: Download scanned Docker images
+        uses: actions/download-artifact@v4
         with:
-          context: ./frontend
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-      - name: Re-build and Push Backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
+          name: docker-images
+      - name: Push scanned Docker images
+        run: |
+          # Push the images Trivy scanned; rebuilding could produce different bytes.
+          docker load -i frontend.tar
+          docker load -i backend.tar
+          docker push ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
 
   gitops-deploy:
     name: 10. GitOps K8s Deployment Sync
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [docker-push]
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
