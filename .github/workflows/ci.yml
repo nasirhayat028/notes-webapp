@@ -141,19 +141,7 @@ jobs:
           cd backend
           npm ci
           npm run coverage
-      # Validate the token before starting the scanner; the token value is never printed.
-      - name: Validate SonarQube credentials
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
-        run: |
-          response=$(curl --silent --show-error --fail-with-body \
-            --user "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/authentication/validate")
-          echo "$response" | grep -q '"valid":true' || {
-            echo "SonarQube rejected SONAR_TOKEN or the token lacks permission."
-            exit 1
-          }
+     
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v3.1.0
         with:
