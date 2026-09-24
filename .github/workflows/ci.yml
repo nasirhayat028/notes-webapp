@@ -112,7 +112,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://ended-cart-soundtrack-designing.trycloudflare.com
+          SONAR_HOST_URL: https://tablets-patio-exams-supplement.trycloudflare.com    
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
@@ -120,7 +120,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://ended-cart-soundtrack-designing.trycloudflare.com
+          SONAR_HOST_URL: https://tablets-patio-exams-supplement.trycloudflare.com    
 
   docker-build:
     name: Docker Image Build
