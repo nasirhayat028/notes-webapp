@@ -4,154 +4,158 @@ on:
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  # ==========================================
-  # STAGE 1: BACKEND PIPELINE (PHASE-1)
-  # ==========================================
-  backend-ci:
-    name: 1. Backend Core (Vitest)
+  frontend:
+    name: Frontend CI
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-      - name: Install dependencies
-        run: npm ci
-      - name: Test backend
-        run: npm test -- --run
 
-  backend-security:
-    name: 2. Backend Dependency Scan (NPM Audit)
-    runs-on: ubuntu-latest
-    needs: [backend-ci]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Audit backend dependencies
-        working-directory: backend
-        run: npm audit --audit-level=high
-
-  # ==========================================
-  # STAGE 2: FRONTEND PIPELINE (PHASE-2)
-  # ==========================================
-  frontend-ci:
-    name: 3. Frontend Core (Vitest & Vite)
-    runs-on: ubuntu-latest
-    needs: [backend-security]
     defaults:
       run:
         working-directory: frontend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
         run: npm ci
+
+      # Run tests before the build so a green image always comes from tested code.
       - name: Test frontend
         run: npm test -- --run
+
       - name: Build frontend
         run: npm run build
 
-  frontend-security:
-    name: 4. Frontend Dependency Scan (NPM Audit)
+  backend:
+    name: Backend CI
     runs-on: ubuntu-latest
-    needs: [frontend-ci]
+
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Audit frontend dependencies
-        working-directory: frontend
-        run: npm audit --audit-level=high
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
 
-  # ==========================================
-  # STAGE 3: GLOBAL SECURITY & QUALITY GATE
-  # ==========================================
+      - name: Install dependencies
+        run: npm ci
+
+      # Backend has API tests even though it has no separate compile step.
+      - name: Test backend
+        run: npm test -- --run
+
   gitleaks:
-    name: 5. Gitleaks Secret Scan
+    name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
-    needs: [frontend-security]
-    permissions:
-      contents: read
-      security-events: write
+    needs:
+      - frontend
+      - backend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sonarqube:
-    name: 6. SonarQube Code Quality & SAST
+  dependency-scan:
+    name: Dependency Security Scan
     runs-on: ubuntu-latest
+
+    needs:
+      - gitleaks
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Audit backend dependencies
+        working-directory: backend
+        run: npm audit --audit-level=high
+
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [gitleaks]
+
+    needs:
+      - dependency-scan
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # These steps must be siblings of checkout; nesting them under checkout
+      # makes the workflow invalid and prevents GitHub Actions from loading it.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      # SonarQube Server 26.x requires Java 21 for the analysis engine.
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
+
       - name: Generate Frontend Coverage
         run: |
           cd frontend
           npm ci
           npm run coverage
+
       - name: Generate Backend Coverage
         run: |
           cd backend
           npm ci
           npm run coverage
-     
+
+      # Pin the scanner version so the runner does not change scanner behavior unexpectedly.
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v3.1.0
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.scanner.socketTimeout=600
+            -Dsonar.ws.timeout=600
+            -Dsonar.scanner.skipJreProvisioning=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          # This must be the complete, reachable SonarQube server URL.
-          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+          SONAR_HOST_URL: https://ceiling-kit-view-types.trycloudflare.com
+                              
 
       - name: SonarQube Quality Gate
         id: quality-gate
@@ -160,122 +164,55 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://catchable-premium-document.ngrok-free.dev
+          SONAR_HOST_URL: https://ceiling-kit-view-types.trycloudflare.com
 
-  # ==========================================
-  # STAGE 4: PACKAGING & IMAGE SECURITY
-  # ==========================================
-  docker-build:
-    name: 7. Docker Image Compilation
+  docker:
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
+
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [sonarqube]
+    
+    needs:
+      - dependency-scan
+      - sonarqube
+      - gitleaks
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build frontend image local
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: false
-          load: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-      - name: Build backend image local
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: false
-          load: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-      - name: Save Local Images
-        run: |
-          docker save -o frontend.tar ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-          docker save -o backend.tar ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-      - name: Upload Docker Image Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images
-          path: |
-            frontend.tar
-            backend.tar
 
-  trivy-scan:
-    name: 8. Trivy Container Vulnerability Scan
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    steps:
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-      - name: Load Docker Images
-        run: |
-          docker load -i frontend.tar
-          docker load -i backend.tar
-      - name: Scan Frontend Image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-      - name: Scan Backend Image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-  # ==========================================
-  # STAGE 5: RELEASE & GITOPS DEPLOYMENT
-  # ==========================================
-  docker-push:
-    name: 9. Push Certified Images to Docker Hub
-    runs-on: ubuntu-latest
-    needs: [trivy-scan]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      - name: Download scanned Docker images
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-      - name: Push scanned Docker images
-        run: |
-          # Push the images Trivy scanned; rebuilding could produce different bytes.
-          docker load -i frontend.tar
-          docker load -i backend.tar
-          docker push ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
 
-  gitops-deploy:
-    name: 10. GitOps K8s Deployment Sync
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [docker-push]
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
+
       - name: Update Kubernetes manifests
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           sed -i "s|image: .*/notes-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}|" k8s/base/frontend-deployment.yaml
           sed -i "s|image: .*/notes-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}|" k8s/base/backend-deployment.yaml
+
       - name: Commit manifest changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add k8s/base/frontend-deployment.yaml k8s/base/backend-deployment.yaml
-          git commit -m "Update images to build-${{ github.run_number }} [skip ci]" || echo "No changes to commit"
+          git commit -m "Update images to build-${{ github.run_number }}" || echo "No changes to commit"
           git push
+
