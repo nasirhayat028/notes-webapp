@@ -109,7 +109,7 @@ jobs:
           args: >
             -Dsonar.ws.timeout=600
             -Dsonar.scanner.skipJreProvisioning=true
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://tablets-patio-exams-supplement.trycloudflare.com    
