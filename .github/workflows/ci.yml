@@ -85,45 +85,45 @@ jobs:
         run: npm audit --audit-level=high || echo "Vulnerabilities found but continuing"
 
 
-    sonarqube:
-      name: SonarQube Analysis
-      runs-on: ubuntu-latest
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      needs: dependency-scan
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-        - name: Setup Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: 22
-        - name: Generate Coverage
-          run: |
-            cd frontend && npm ci && npm run coverage || echo "No coverage script"
-            cd ../backend && npm ci && npm run coverage || echo "No coverage script"
-        - name: SonarQube Scan
-          uses: SonarSource/sonarqube-scan-action@v3.1.0
-          with:
-            projectBaseDir: .
-            args: >
-              -Dsonar.scanner.socketTimeout=900
-              -Dsonar.ws.timeout=900
-              -Dsonar.scanner.skipJreProvisioning=false
-              -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
-          env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
-            NODE_OPTIONS: "--max-old-space-size=4096" # Memory buffer badhane ke liye
-          
-        - name: SonarQube Quality Gate
-          uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
-          with:
-            pollingTimeoutSec: 600
-          env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: dependency-scan
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate Coverage
+        run: |
+          cd frontend && npm ci && npm run coverage || echo "No coverage script"
+          cd ../backend && npm ci && npm run coverage || echo "No coverage script"
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3.1.0
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.scanner.socketTimeout=900
+            -Dsonar.ws.timeout=900
+            -Dsonar.scanner.skipJreProvisioning=false
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
+          NODE_OPTIONS: "--max-old-space-size=4096" # Memory buffer badhane ke liye
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          pollingTimeoutSec: 600
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
 
   
 
