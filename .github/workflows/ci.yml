@@ -114,8 +114,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
-          NODE_OPTIONS: "--max-old-space-size=4096" # Memory buffer badhane ke liye
+          SONAR_HOST_URL: https://long-spies-jump.loca.lt
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
@@ -123,7 +122,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://hiking-lake-scheduling-objectives.trycloudflare.com    
+          SONAR_HOST_URL: https://long-spies-jump.loca.lt
 
   
 
