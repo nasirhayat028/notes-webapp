@@ -116,13 +116,14 @@ jobs:
           SONAR_HOST_URL: https://assist-disco-returns-expenditure.trycloudflare.com 
 
 
+
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://assist-disco-returns-expenditure.trycloudflare.com  
+          SONAR_HOST_URL: https://assist-disco-returns-expenditure.trycloudflare.com 
 
   docker-build:
     name: Docker Image Build
