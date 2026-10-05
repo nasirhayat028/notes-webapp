@@ -113,7 +113,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://ahead-workforce-frog-dave.trycloudflare.com 
+          SONAR_HOST_URL: https://assist-disco-returns-expenditure.trycloudflare.com 
 
 
       - name: SonarQube Quality Gate
@@ -122,7 +122,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://ahead-workforce-frog-dave.trycloudflare.com 
+          SONAR_HOST_URL: https://assist-disco-returns-expenditure.trycloudflare.com  
 
   docker-build:
     name: Docker Image Build
