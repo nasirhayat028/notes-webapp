@@ -133,18 +133,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Build Images Locally
         run: |
           docker build -t notes-frontend:build-${{ github.run_number }} ./frontend
           docker build -t notes-backend:build-${{ github.run_number }} ./backend
-      
+
       # Images ko tar file mein save karna taake aglay jobs use kar sakein
       - name: Archive Docker Images
         run: |
           docker save notes-frontend:build-${{ github.run_number }} -o frontend-image.tar
           docker save notes-backend:build-${{ github.run_number }} -o backend-image.tar
-      
+
       - name: Upload Images as Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -163,13 +163,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docker-images-archive
-      
+
       # Wahi tar files se images ko is computer par load karna
       - name: Load Archived Docker Images
         run: |
           docker load -i frontend-image.tar
           docker load -i backend-image.tar
-      
+
       - name: Run Trivy Scan on Frontend Image
         uses: aquasecurity/trivy-action@master
         with:
@@ -197,7 +197,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docker-images-archive
-      
+
       - name: Load Archived Docker Images
         run: |
           docker load -i frontend-image.tar
@@ -208,13 +208,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      
+
       # Wahi original local image ko Docker Hub repository ke tag ke sath push karna
       - name: Tag and Push Images
         run: |
           docker tag notes-frontend:build-${{ github.run_number }} ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
           docker tag notes-backend:build-${{ github.run_number }} ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
-          
+
           docker push ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}
           docker push ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}
 
@@ -229,10 +229,96 @@ jobs:
         run: |
           sed -i "s|image: .*/notes-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-frontend:build-${{ github.run_number }}|" k8s/base/frontend-deployment.yaml
           sed -i "s|image: .*/notes-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/notes-backend:build-${{ github.run_number }}|" k8s/base/backend-deployment.yaml
+
       - name: Commit manifest changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@://github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add k8s/base/frontend-deployment.yaml k8s/base/backend-deployment.yaml
-          git commit -m "Update images to build-${{ github.run_number }}" || echo "No changes"
+          git commit -m "Update images to build-${{ github.run_number }} [skip ci]" || echo "No changes"
           git push
+
+  dast-zap:
+    name: OWASP ZAP Baseline DAST
+    runs-on: self-hosted
+    needs: gitops-deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Wait for Argo CD application health
+        shell: bash
+        run: |
+          echo "Waiting for Notes App to become Synced and Healthy..."
+          for i in {1..30}; do
+            STATUS=$(kubectl get application notes-app -n argocd \
+              -o jsonpath='{.status.sync.status}{" "}{.status.health.status}' 2>/dev/null || true)
+
+            echo "Argo CD status: ${STATUS:-not available}"
+
+            if [ "$STATUS" = "Synced Healthy" ]; then
+              echo "Application is Synced and Healthy."
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "Application did not become Synced and Healthy within 5 minutes."
+          exit 1
+
+      - name: Verify expected image versions are deployed
+        env:
+          EXPECTED_TAG: build-${{ github.run_number }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          kubectl rollout status deployment/frontend -n noteapp --timeout=180s
+          kubectl rollout status deployment/backend -n noteapp --timeout=180s
+
+          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp \
+            -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp \
+            -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+          echo "Frontend image: $FRONTEND_IMAGE"
+          echo "Backend image: $BACKEND_IMAGE"
+
+          test "$FRONTEND_IMAGE" = "$DOCKER_USERNAME/notes-frontend:$EXPECTED_TAG"
+          test "$BACKEND_IMAGE" = "$DOCKER_USERNAME/notes-backend:$EXPECTED_TAG"
+
+          echo "Both expected image versions are deployed."
+
+      - name: Verify application endpoint
+        run: |
+          docker run --rm \
+            --network kind \
+            --add-host notes.local:172.18.0.2 \
+            curlimages/curl:latest \
+            --fail --silent --show-error \
+            --retry 5 --retry-delay 5 --retry-connrefused \
+            -I http://notes.local
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/zap-reports"
+
+          docker run --rm \
+            --network kind \
+            --add-host notes.local:172.18.0.2 \
+            -v "$GITHUB_WORKSPACE/zap-reports:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://notes.local \
+            -I \
+            -r zap-baseline.html \
+            -J zap-baseline.json
+
+      - name: Upload ZAP Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-reports-${{ github.run_number }}
+          path: zap-reports/
+          if-no-files-found: warn
+          retention-days: 14
