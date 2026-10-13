@@ -67,6 +67,17 @@
   cursor: default;
 }
 
+.activity-bar-height-1  { height: 10%; }
+.activity-bar-height-2  { height: 20%; }
+.activity-bar-height-3  { height: 30%; }
+.activity-bar-height-4  { height: 40%; }
+.activity-bar-height-5  { height: 50%; }
+.activity-bar-height-6  { height: 60%; }
+.activity-bar-height-7  { height: 70%; }
+.activity-bar-height-8  { height: 80%; }
+.activity-bar-height-9  { height: 90%; }
+.activity-bar-height-10 { height: 100%; }
+
 .activity-bar:hover,
 .activity-bar:focus-visible {
   background-color: var(--chart-bar-emphasis);

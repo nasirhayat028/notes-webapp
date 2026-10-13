@@ -63,20 +63,26 @@ function NotesActivity({ notes }: NotesActivityProps) {
       </div>
 
       <div className="activity-chart">
-        {days.map((day) => (
-          <div className="activity-bar-column" key={day.key}>
-            <div className="activity-bar-track">
-              <div
-                className={`activity-bar${day.isToday ? ' activity-bar-today' : ''}`}
-                style={{ height: `${Math.max((day.count / maxCount) * 100, 6)}%` }}
-                tabIndex={0}
-                title={`${day.label}: ${day.count} note${day.count === 1 ? '' : 's'}`}
-                aria-label={`${day.label}: ${day.count} note${day.count === 1 ? '' : 's'}`}
-              />
+        {days.map((day) => {
+          const heightLevel = Math.max(
+            1,
+            Math.ceil(Math.max((day.count / maxCount) * 100, 6) / 10)
+          )
+
+          return (
+            <div className="activity-bar-column" key={day.key}>
+              <div className="activity-bar-track">
+                <div
+                  className={`activity-bar activity-bar-height-${heightLevel}${day.isToday ? ' activity-bar-today' : ''}`}
+                  tabIndex={0}
+                  title={`${day.label}: ${day.count} note${day.count === 1 ? '' : 's'}`}
+                  aria-label={`${day.label}: ${day.count} note${day.count === 1 ? '' : 's'}`}
+                />
+              </div>
+              <span className="activity-bar-label">{day.label[0]}</span>
             </div>
-            <span className="activity-bar-label">{day.label[0]}</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
