@@ -113,7 +113,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://merely-slightly-directors-correction.trycloudflare.com 
+          SONAR_HOST_URL: https://reno-guy-documentation-header.trycloudflare.com/ 
 
 
 
@@ -123,7 +123,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://merely-slightly-directors-correction.trycloudflare.com
+          SONAR_HOST_URL: https://reno-guy-documentation-header.trycloudflare.com/merely-
 
   docker-build:
     name: Docker Image Build
