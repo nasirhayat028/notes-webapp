@@ -299,11 +299,16 @@ jobs:
             --retry 5 --retry-delay 5 --retry-connrefused \
             -I http://notes.local
 
+
       - name: Run OWASP ZAP Baseline Scan
         run: |
+          # Create the folder and explicitly ensure it is writeable
           mkdir -p "$GITHUB_WORKSPACE/zap-reports"
+          chmod 777 "$GITHUB_WORKSPACE/zap-reports"
 
+          # Run docker with the current host user's UID/GID mapping
           docker run --rm \
+            --user $(id -u):$(id -g) \
             --network kind \
             --add-host notes.local:172.18.0.2 \
             -v "$GITHUB_WORKSPACE/zap-reports:/zap/wrk/:rw" \
@@ -313,6 +318,7 @@ jobs:
             -I \
             -r zap-baseline.html \
             -J zap-baseline.json
+
 
       - name: Upload ZAP Reports
         if: always()
