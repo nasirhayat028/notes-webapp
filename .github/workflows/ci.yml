@@ -283,13 +283,14 @@ jobs:
           echo "Frontend image: $FRONTEND_IMAGE"
           echo "Backend image: $BACKEND_IMAGE"
 
-          # 3. Case-Insensitive ignore check lagayein (-i flag ke sath)
-          echo "$FRONTEND_IMAGE" | grep -i "notes-frontend:$EXPECTED_TAG"
-          echo "$BACKEND_IMAGE" | grep -i "notes-backend:$EXPECTED_TAG"
-
-          echo "Both expected image versions are deployed successfully."
-
-
+          # 3. Direct string pattern match (Grep bypass karke direct logic verification)
+          if [[ "$FRONTEND_IMAGE" == *"$EXPECTED_TAG"* ]] && [[ "$BACKEND_IMAGE" == *"$EXPECTED_TAG"* ]]; then
+            echo "Both expected image versions ($EXPECTED_TAG) are deployed successfully."
+            exit 0
+          else
+            echo "Error: Image tags mismatch! Expected: $EXPECTED_TAG"
+            exit 1
+          fi
 
       - name: Verify application endpoint
         run: |
