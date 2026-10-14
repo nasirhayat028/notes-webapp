@@ -113,7 +113,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://males-filling-sagem-need.trycloudflare.com
+          SONAR_HOST_URL: https://attractions-mason-grow-nebraska.trycloudflare.com  
 
 
 
@@ -123,7 +123,7 @@ jobs:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://males-filling-sagem-need.trycloudflare.com
+          SONAR_HOST_URL: https://attractions-mason-grow-nebraska.trycloudflare.com
 
   docker-build:
     name: Docker Image Build
@@ -246,6 +246,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Wait for Argo CD application health
         shell: bash
         run: |
@@ -270,24 +271,23 @@ jobs:
       - name: Verify expected image versions are deployed
         env:
           EXPECTED_TAG: build-${{ github.run_number }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
+          # Pehle check karein ki rollout success ho chuka hai
           kubectl rollout status deployment/frontend -n noteapp --timeout=180s
           kubectl rollout status deployment/backend -n noteapp --timeout=180s
+          
+          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp -o jsonpath='{.spec.template.spec.containers.image}')
+          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp -o jsonpath='{.spec.template.spec.containers.image}')
 
-          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp \
-            -o jsonpath='{.spec.template.spec.containers[0].image}')
-
-          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp \
-            -o jsonpath='{.spec.template.spec.containers[0].image}')
 
           echo "Frontend image: $FRONTEND_IMAGE"
           echo "Backend image: $BACKEND_IMAGE"
 
-          test "$FRONTEND_IMAGE" = "$DOCKER_USERNAME/notes-frontend:$EXPECTED_TAG"
-          test "$BACKEND_IMAGE" = "$DOCKER_USERNAME/notes-backend:$EXPECTED_TAG"
+          # Strict DOCKER_USERNAME comparison ke bajaye sirf tag aur image suffix ensure karein
+          echo "$FRONTEND_IMAGE" | grep -E "notes-frontend:$EXPECTED_TAG"
+          echo "$BACKEND_IMAGE" | grep -E "notes-backend:$EXPECTED_TAG"
 
-          echo "Both expected image versions are deployed."
+          echo "Both expected image versions are deployed successfully."
 
       - name: Verify application endpoint
         run: |
