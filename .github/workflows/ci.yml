@@ -272,22 +272,23 @@ jobs:
         env:
           EXPECTED_TAG: build-${{ github.run_number }}
         run: |
-          # Pehle check karein ki rollout success ho chuka hai
+          # 1. Rollout complete hone ka wait karein
           kubectl rollout status deployment/frontend -n noteapp --timeout=180s
           kubectl rollout status deployment/backend -n noteapp --timeout=180s
           
-          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp -o jsonpath='{.spec.template.spec.containers.image}')
-          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp -o jsonpath='{.spec.template.spec.containers.image}')
-
+          # 2. Array index [0] ke sath accurate container images fetch karein
+          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp -o jsonpath='{.spec.template.spec.containers[0].image}')
+          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp -o jsonpath='{.spec.template.spec.containers[0].image}')
 
           echo "Frontend image: $FRONTEND_IMAGE"
           echo "Backend image: $BACKEND_IMAGE"
 
-          # Strict DOCKER_USERNAME comparison ke bajaye sirf tag aur image suffix ensure karein
+          # 3. Content matching parsing check karein
           echo "$FRONTEND_IMAGE" | grep -E "notes-frontend:$EXPECTED_TAG"
           echo "$BACKEND_IMAGE" | grep -E "notes-backend:$EXPECTED_TAG"
 
           echo "Both expected image versions are deployed successfully."
+
 
       - name: Verify application endpoint
         run: |
