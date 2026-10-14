@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: nasirhayat028/notes-frontend:build-81
+          image: nasirhayat028/notes-frontend:build-82
           imagePullPolicy: Always
 
           ports:
