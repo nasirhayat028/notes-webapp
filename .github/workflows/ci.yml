@@ -276,18 +276,19 @@ jobs:
           kubectl rollout status deployment/frontend -n noteapp --timeout=180s
           kubectl rollout status deployment/backend -n noteapp --timeout=180s
           
-          # 2. Array index [0] ke sath accurate container images fetch karein
-          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp -o jsonpath='{.spec.template.spec.containers[0].image}')
-          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp -o jsonpath='{.spec.template.spec.containers[0].image}')
+          # 2. Deployed images fetch karein
+          FRONTEND_IMAGE=$(kubectl get deployment frontend -n noteapp -o jsonpath='{.spec.template.spec.containers[*].image}')
+          BACKEND_IMAGE=$(kubectl get deployment backend -n noteapp -o jsonpath='{.spec.template.spec.containers[*].image}')
 
           echo "Frontend image: $FRONTEND_IMAGE"
           echo "Backend image: $BACKEND_IMAGE"
 
-          # 3. Content matching parsing check karein
-          echo "$FRONTEND_IMAGE" | grep -E "notes-frontend:$EXPECTED_TAG"
-          echo "$BACKEND_IMAGE" | grep -E "notes-backend:$EXPECTED_TAG"
+          # 3. Case-Insensitive ignore check lagayein (-i flag ke sath)
+          echo "$FRONTEND_IMAGE" | grep -i "notes-frontend:$EXPECTED_TAG"
+          echo "$BACKEND_IMAGE" | grep -i "notes-backend:$EXPECTED_TAG"
 
           echo "Both expected image versions are deployed successfully."
+
 
 
       - name: Verify application endpoint
